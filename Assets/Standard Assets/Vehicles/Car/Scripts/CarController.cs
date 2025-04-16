@@ -73,6 +73,101 @@ namespace UnityStandardAssets.Vehicles.Car
         public float BrakeInput { get; private set; }
 
         private bool m_isRecording = false;
+
+		[SerializeField] private List<GameObject> sensors;
+		private List<float> sensor_values = new List<float> ();
+
+		public bool sensor_visable;
+
+		public bool main_car;
+
+		// sense acceleration
+		private float AccelerationT;
+		private float AccelerationN;
+		private float Jerk;
+		private float lastSpeed;
+		private float lastAcc;
+
+		//used to calculate path curvatures
+		private List<Vector3> previous_pos = new List<Vector3>();
+
+		private List<float> averageSpeed = new List<float>(); //average speed from previous frames
+		private List<float> averageAcc = new List<float>(); //average acceleration from previous frames
+
+		public Vector3 Position () {
+			return transform.position;
+		}
+		public List<int> getGPS(){
+			List<int> gps = new List<int> ();
+			gps.Add ((int)transform.position.x);
+			gps.Add ((int)transform.position.z);
+			return gps;
+		}
+
+		public Quaternion Orientation () {
+			return transform.rotation;
+		}
+
+		//toggle sensors visable on/off
+		public void ToggleSensorView()
+		{
+			sensor_visable = !sensor_visable;
+			if (sensor_visable) {
+				foreach (GameObject sensor in sensors) {
+					sensor.GetComponent<LineRenderer>().enabled = true;
+				}
+			} 
+			else {
+				foreach (GameObject sensor in sensors) {
+					sensor.GetComponent<LineRenderer>().enabled = false;
+				}
+			}
+		}
+
+		public void SenseDistance()
+		{
+			if (sensors.Count != 0) {
+				List<float> distances = new List<float> ();
+				int i = 0;
+				foreach (GameObject sensor in sensors) {
+					RaycastHit hit;
+					Physics.Raycast (sensor.transform.position, sensor.transform.forward, out hit);
+					LineRenderer lineRenderer = sensor.GetComponentInParent<LineRenderer> ();
+					if (sensor_visable) {
+						if (hit.collider) {
+							lineRenderer.SetPosition (1, new Vector3 (0, 0, 10 * hit.distance));
+						} else {
+							lineRenderer.SetPosition (1, new Vector3 (0, 0, 1000));
+						}
+					}
+					distances.Add (hit.distance);
+					i += 1;
+				}
+				sensor_values = distances;
+			}
+		}
+		public float SenseAccT()
+		{
+			return AccelerationT;
+		}
+		public float SenseAccN()
+		{
+			return AccelerationN;
+		}
+		public float SenseAcc()
+		{
+			return Mathf.Sqrt (AccelerationT * AccelerationT + AccelerationN * AccelerationN);
+		}
+		public float SenseJerk()
+		{
+			return Jerk;
+		}
+
+		public List<float> getSensors()
+		{
+			return sensor_values;
+		}
+
         public bool IsRecording {
             get
             {
@@ -129,6 +224,11 @@ namespace UnityStandardAssets.Vehicles.Car
 
         public float MaxSpeed{ get { return m_Topspeed; } }
 
+		public void setMaxSpeed(float Topspeed) 
+		{
+			m_Topspeed = Topspeed;
+		}
+
         public float Revs { get; private set; }
 
         public float AccelInput { get; set; }
@@ -146,6 +246,12 @@ namespace UnityStandardAssets.Vehicles.Car
 
             m_Rigidbody = GetComponent<Rigidbody> ();
             m_CurrentTorque = m_FullTorqueOverAllWheels - (m_TractionControl * m_FullTorqueOverAllWheels);
+
+			lastSpeed = 0;
+			lastAcc = 0;
+			Jerk = 0;
+			AccelerationT = 0;
+			AccelerationN = 0;
         }
 
         private void GearChanging ()
@@ -199,6 +305,45 @@ namespace UnityStandardAssets.Vehicles.Car
             Revs = ULerp (revsRangeMin, revsRangeMax, m_GearFactor);
         }
 
+        public void FixedUpdate()
+        {
+			if (main_car) 
+			{
+				//average over last frames
+				int time_steps = 10;
+
+				float speed = m_Rigidbody.velocity.magnitude;
+
+				if (averageSpeed.Count >= time_steps) {
+				
+					float averaged_speed = AverageLastSpeed ();
+					AccelerationT = (averaged_speed - lastSpeed) / (time_steps*Time.deltaTime);
+					AccelerationN = (averaged_speed) * (averaged_speed) * SenseCurve ();
+					lastSpeed = averaged_speed;
+
+					float currentAcc = SenseAcc ();
+					averageAcc.Add (currentAcc);
+
+					averageSpeed.Clear ();
+					previous_pos.Clear ();
+				}
+				averageSpeed.Add (speed);
+				previous_pos.Add (transform.position);
+
+				if (averageAcc.Count >= 5) 
+				{
+					float averaged_acc = AverageLastAcc();
+					Jerk = (averaged_acc - lastAcc) / ((5*time_steps) * Time.deltaTime);
+					lastAcc = averaged_acc;
+
+					averageAcc.Clear ();
+				}
+					
+
+			}
+        }
+
+
         public void Update()
         {
             if (IsRecording)
@@ -206,6 +351,77 @@ namespace UnityStandardAssets.Vehicles.Car
                 //Dump();
             }
         }
+
+		public float AverageLastSpeed()
+		{
+			
+			float averaged_speed = 0.0f;
+
+			for (int i = 0; i < averageSpeed.Count; i++) 
+			{
+				averaged_speed += averageSpeed[i];
+			}
+
+			return averaged_speed / (float)(averageSpeed.Count);
+
+		}
+		public float AverageLastAcc()
+		{
+
+			float averaged_acc = 0.0f;
+
+			for (int i = 0; i < averageAcc.Count; i++) 
+			{
+				averaged_acc += averageAcc[i];
+			}
+
+			return averaged_acc / (float)(averageAcc.Count);
+
+		}
+		public float SenseCurve()
+		{
+			float averaged_curve = 0.0f;
+
+			for (int i = 0; i < previous_pos.Count-2; i++) 
+			{
+				
+
+				float x1 = previous_pos [i].x;
+				float x2 = previous_pos [i + 1].x;
+				float x3 = previous_pos [i + 2].x;
+
+				float y1 = previous_pos [i].z;
+				float y2 = previous_pos [i + 1].z;
+				float y3 = previous_pos [i + 2].z;
+
+				Vector2 ray1 = new Vector2 (x2 - x1, y2 - y1);
+				Vector2 ray2 = new Vector2 (x3 - x2, y3 - y2);
+
+				if (ray1.magnitude != 0 && ray2.magnitude != 0) 
+				{
+
+					Vector2 ray3 = new Vector2 (x3 - x1, y3 - y1);
+
+					float corner_angle = Mathf.Abs (Vector2.Angle (ray1, ray2));
+
+					if (ray3.magnitude != 0 && corner_angle != 180) 
+					{
+						averaged_curve += 2 * Mathf.Sin (corner_angle*Mathf.Deg2Rad) / ray3.magnitude;
+					}
+					else
+					{
+						
+						//the curve is infinite, this move is totally illegal, just going to return 1000000
+						averaged_curve += 1000000;
+					}
+
+				}
+				//else skip and just say that curve is zero since its stopped
+			}
+
+			return averaged_curve / ( (float)(previous_pos.Count-2));
+
+		}
 
         public void Move (float steering, float accel, float footbrake, float handbrake)
         {
@@ -222,6 +438,7 @@ namespace UnityStandardAssets.Vehicles.Car
             AccelInput = accel = Mathf.Clamp (accel, 0, 1);
             BrakeInput = footbrake = -1 * Mathf.Clamp (footbrake, -1, 0);
             handbrake = Mathf.Clamp (handbrake, 0, 1);
+
 
             //Set the steer on the front wheels.
             //Assuming that wheels 0 and 1 are the front wheels.
@@ -251,6 +468,7 @@ namespace UnityStandardAssets.Vehicles.Car
             CheckForWheelSpin ();
             TractionControl ();
         }
+       
 
         private void CapSpeed ()
         {
@@ -274,6 +492,12 @@ namespace UnityStandardAssets.Vehicles.Car
 
         private void ApplyDrive (float accel, float footbrake)
         {
+
+			for (int i = 0; i < 4; i++) 
+			{
+				m_WheelColliders [i].motorTorque = 0f;
+				m_WheelColliders [i].brakeTorque = 0f;
+			}
 
             float thrustTorque;
             switch (m_CarDriveType) {

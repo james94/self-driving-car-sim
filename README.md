@@ -1,3 +1,28 @@
+# Self-Driving Car Simulators
+
+Migrated from Unity 3D version 2020_3 to **2022.3.60f1** on **Universal Render Pipeline**. Currently
+was able to update "Lake Track" and "Jungle Track" with latest shaders with most being Universal Render Pipeline Lit for the roads, terrain, trees, water, etc.
+Also verified I could play those scenes and control the controls. Also verified I could press "esc",
+navigate back to the main menu, navigate to the controls menu to see which keys are mapped to what
+particular actions for controlling the car, recording data, etc. With navigating to the main menu,
+I also verified I could switch between both the "Lake Track" and "Jungle Track" scenes.
+
+While its great we run "Lake Track" and "Jungle Track" scenes on Unity 3D version **2022.3.60f1** on **Universal Render Pipeline**, we still need to look at getting "Path Planning" scene and "Capstone" scene both working on this Unity 3D version.
+
+## Lake Track 
+
+![lake_track_view1](./docs/images/lake_track_view_unity_urp_2022_3_60f1_view1.png)
+
+## Jungle Track
+
+![jungle_track_view1](./docs/images/jungle_track_view_unity_urp_2022_3_60f1_view1.png)
+
+## How To Launch SDC Sims in Unity
+
+Coming soon...
+
+## Previous README By Udacity for SDCE Sim
+
 # Deprecated Repository
 The code in the master branch of this repository is deprecated. Currently enrolled learners, if any, can: 
 - Use the upgraded code in the [Unity_2020_3](https://github.com/udacity/self-driving-car-sim/tree/Unity_2020_3) or [Unity_2019_4](https://github.com/udacity/self-driving-car-sim/tree/Unity_2019_4) branches as suitable per your local Unity version compatibility. Credits: [PR#134](https://github.com/udacity/self-driving-car-sim/pull/134) and  [PR#133](https://github.com/udacity/self-driving-car-sim/pull/133) respectively. 

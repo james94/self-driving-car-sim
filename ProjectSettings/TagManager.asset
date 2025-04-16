@@ -4,14 +4,24 @@
 TagManager:
   serializedVersion: 2
   tags:
-  - Waypoint
+  - MainLight
+  - CinemachineTarget
+  - ScreenCamera
+  - cockpit_capitalLaser
   layers:
   - Default
   - TransparentFX
   - Ignore Raycast
-  - 
+  - Temp_Post
   - Water
   - UI
+  - Terminal
+  - Location
+  - LookInteractor
+  - Screen
+  - Occluder
+  - Camera
+  - MainCameraOnly
   - 
   - 
   - 
@@ -19,20 +29,13 @@ TagManager:
   - 
   - 
   - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
-  - 
+  - Cockpit
+  - Cockpit_3DSkybox
+  - Cockpit_3DSkybox_BG
+  - Cockpit_Ally
+  - Cockpit_Invader
+  - Cockpit_BG
+  - Cockpit_DepthClear
   - 
   - 
   - 
@@ -41,16 +44,4 @@ TagManager:
   m_SortingLayers:
   - name: Default
     uniqueID: 0
-    locked: 0
-  - name: Background
-    uniqueID: 1093696345
-    locked: 0
-  - name: Foreground
-    uniqueID: 1859086223
-    locked: 0
-  - name: Characters
-    uniqueID: 3940858523
-    locked: 0
-  - name: UI
-    uniqueID: 771169021
     locked: 0
