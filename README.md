@@ -9,11 +9,15 @@ I also verified I could switch between both the "Lake Track" and "Jungle Track" 
 
 While its great we run "Lake Track" and "Jungle Track" scenes on Unity 3D version **2022.3.60f1** on **Universal Render Pipeline**, we still need to look at getting "Path Planning" scene and "Capstone" scene both working on this Unity 3D version.
 
-## Lake Track 
+## Term 1
+
+Switch to **Unity_URP_2022_3_Term1** branch to access Term 1. This is Behavioral Cloning project that can be applied to both tracks.
+
+### Lake Track 
 
 ![lake_track_view1](./docs/images/lake_track_view_unity_urp_2022_3_60f1_view1.png)
 
-## Jungle Track
+### Jungle Track
 
 ![jungle_track_view1](./docs/images/jungle_track_view_unity_urp_2022_3_60f1_view1.png)
 
