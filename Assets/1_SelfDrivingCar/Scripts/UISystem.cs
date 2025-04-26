@@ -125,7 +125,8 @@ public class UISystem : MonoSingleton<UISystem> {
 	    if(Input.GetKeyDown(KeyCode.Escape))
         {
             //Do Menu Here
-            SceneManager.LoadScene("MenuScene");
+            // SceneManager.LoadScene("MenuScene");
+            ReturnToAppropriateMenu();
         }
 
         if (Input.GetKeyDown(KeyCode.Return))
@@ -135,4 +136,43 @@ public class UISystem : MonoSingleton<UISystem> {
 
         UpdateCarValues();
     }
+
+    // Automatic Term Detection without MenuOptions
+    void ReturnToAppropriateMenu()
+    {
+        bool isTerm1Scene = false;
+        string currentScene = SceneManager.GetActiveScene().name;
+
+        if(currentScene == "LakeTrackTraining" || currentScene == "LakeTrackAutonomous") {
+            isTerm1Scene = true;
+        }
+        else if(currentScene == "JungleTrackTraining" || currentScene == "JungleTrackAutonomous") {
+            isTerm1Scene = true;
+        }
+
+        Debug.Log($"isTerm1Scene = {isTerm1Scene}");
+
+        // bool isTerm1Scene = currentScene.Contains("LakeTrack") || currentScene.Contains("JungleTrack");
+
+        SceneManager.LoadScene(isTerm1Scene ? "MenuScene" : "MenuSceneTerm2");
+    }
+
+    // Automatic Term Detection with MenuOptions (Under Development)
+    // void ReturnToAppropriateMenu()
+    // {
+    //     // Get term state from persistent MenuOptions
+    //     bool isTerm1 = MenuOptions.GetTerm();
+
+    //     // Verify scene existence first
+    //     string targetScene = isTerm1 ? "MenuScene" : "MenuSceneTerm2";
+    //     if(Application.CanStreamedLevelBeLoaded(targetScene))
+    //     {
+    //         SceneManager.LoadScene(targetScene);
+    //     }
+    //     else
+    //     {
+    //         Debug.LogError($"Missing scene: {targetScene}");
+    //         SceneManager.LoadScene("MenuScene"); // Fallback to Term1
+    //     }
+    // }
 }

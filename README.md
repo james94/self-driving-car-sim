@@ -17,9 +17,29 @@ Switch to **Unity_URP_2022_3_Term1** branch to access Term 1. This is Behavioral
 
 ![lake_track_view1](./docs/images/lake_track_view_unity_urp_2022_3_60f1_view1.png)
 
+- **Figure 1**: Behavorial Cloning CNN Autonomous Car Control on Lake Track
+
 ### Jungle Track
 
 ![jungle_track_view1](./docs/images/jungle_track_view_unity_urp_2022_3_60f1_view1.png)
+
+- **Figure 2**: Behavorial Cloning CNN Autonomous Car Control on Jungle Track
+
+## Term 2
+
+Switch to **Unity_URP_2022_3_Term2** branch to access Term 2. This is PID Control project that can be applied to **Lake Track**.
+
+![pid_control_lake_track](./docs/images/pid_control_lake_track_view_urp_2022_3_60f1_view1.png)
+
+- **Figure 3**: PID Control Car on Lake Track
+
+![mpc_control_lake_track](./docs/images/mpc_control_lake_track_view_urp_2022_3_60f1_view1.png)
+
+- **Figure 4**: MPC Control Car on Lake Track
+
+Also added support for switching to Extended Kalman Filter, Unscented Kalman filters, Particle Filter scenes.
+
+Also our Menu Options C# script and UI System C# script have been updated to allow for switching between **Term 1** and **Term 2** scenes.
 
 ## How To Launch SDC Sims in Unity
 
