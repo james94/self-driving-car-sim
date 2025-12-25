@@ -1,13 +1,13 @@
 # Self-Driving Car Simulators
 
-Migrated from Unity 3D version 2020_3 to **2022.3.60f1** on **Universal Render Pipeline**. Currently
+Migrated from Unity 3D version 2020_3 to **2022.3.62f3** on **Universal Render Pipeline**. Currently
 was able to update "Lake Track" and "Jungle Track" with latest shaders with most being Universal Render Pipeline Lit for the roads, terrain, trees, water, etc.
 Also verified I could play those scenes and control the controls. Also verified I could press "esc",
 navigate back to the main menu, navigate to the controls menu to see which keys are mapped to what
 particular actions for controlling the car, recording data, etc. With navigating to the main menu,
 I also verified I could switch between both the "Lake Track" and "Jungle Track" scenes.
 
-While its great we run "Lake Track" and "Jungle Track" scenes on Unity 3D version **2022.3.60f1** on **Universal Render Pipeline**, we still need to look at getting "Path Planning" scene and "Capstone" scene both working on this Unity 3D version.
+While its great we run "Lake Track" and "Jungle Track" scenes on Unity 3D version **2022.3.62f3** on **Universal Render Pipeline**, we still need to look at getting "Path Planning" scene and "Capstone" scene both working on this Unity 3D version.
 
 ## Term 1
 
