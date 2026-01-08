@@ -41,6 +41,16 @@ Also added support for switching to Extended Kalman Filter, Unscented Kalman fil
 
 Also our Menu Options C# script and UI System C# script have been updated to allow for switching between **Term 1** and **Term 2** scenes.
 
+## Term 3
+
+Switch to **Unity_URP_2022_3_Term3** branch to access Term 3. This is Path Planner project that can be applied to **Highway Driving Track**.
+
+![highway_driving_track](./docs/images/highway_driving_view_urp_2022_3_62f3.png)
+
+- **Figure 5**: Path Planner Car on Highway Driving Track
+
+I had to switch some C# scripts related to the Highway Driving scene to be standalone Term 3 to get the simulation running successfully. I plan to update the C# scripts, so we can launch and play the Unity scenes from Term 1 and Term 2 while still being able to launch Highway Driving scene from Term 3.
+
 ## How To Launch SDC Sims in Unity
 
 Coming soon...
