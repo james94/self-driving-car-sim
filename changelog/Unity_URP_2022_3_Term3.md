@@ -137,3 +137,44 @@ Untracked files:
         Assets/_TerrainAutoUpgrade/
         UpgradeLog.htm
         changelog/
+
+### Git Status Iteration 3
+
+This was after pushing the latest C# script updates to the repo;
+
+ubuntu@DESKTOP-B7FMDT9:/mnt/c/src/self-driving-car-sim$ git status
+Refresh index: 100% (7827/7827), done.
+On branch Unity_URP_2022_3_Term3
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+        modified:   Assets/Materials/pathElem.mat
+        modified:   Assets/RoadMarkers/Materials/Markers/GSDWhiteYellowDouble-6L.mat
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+        Assets/1_SelfDrivingCar/Prefabs/Car 1.prefab
+        Assets/1_SelfDrivingCar/Prefabs/Car 1.prefab.meta
+        Assets/1_SelfDrivingCar/Prefabs/Car copy.prefab
+        Assets/1_SelfDrivingCar/Prefabs/Car copy.prefab.meta
+        Assets/1_SelfDrivingCar/Prefabs/CarUI copy.prefab
+        Assets/1_SelfDrivingCar/Prefabs/CarUI copy.prefab.meta
+        Assets/1_SelfDrivingCar/Prefabs/CarWaypointBased copy.prefab
+        Assets/1_SelfDrivingCar/Prefabs/CarWaypointBased copy.prefab.meta
+        Assets/1_SelfDrivingCar/Prefabs/CommandServer copy.prefab
+        Assets/1_SelfDrivingCar/Prefabs/CommandServer copy.prefab.meta
+        Assets/1_SelfDrivingCar/Prefabs/SimulatorUI copy.prefab
+        Assets/1_SelfDrivingCar/Prefabs/SimulatorUI copy.prefab.meta
+        Assets/1_SelfDrivingCar/Prefabs/SkidTrail copy.prefab
+        Assets/1_SelfDrivingCar/Prefabs/SkidTrail copy.prefab.meta
+        Assets/1_SelfDrivingCar/Prefabs/SocketIO copy.prefab
+        Assets/1_SelfDrivingCar/Prefabs/SocketIO copy.prefab.meta
+        Assets/1_SelfDrivingCar/Prefabs/ThreadDispatcher copy.prefab
+        Assets/1_SelfDrivingCar/Prefabs/ThreadDispatcher copy.prefab.meta
+        Assets/New Terrain 2.asset
+        Assets/New Terrain 2.asset.meta
+        Assets/_TerrainAutoUpgrade.meta
+        Assets/_TerrainAutoUpgrade/
+        UpgradeLog.htm
+
+no changes added to commit (use "git add" and/or "git commit -a")
