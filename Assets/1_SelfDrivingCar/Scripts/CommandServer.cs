@@ -6,48 +6,25 @@ using UnityStandardAssets.Vehicles.Car;
 using System;
 using System.Security.AccessControl;
 
-public class CommandServer : MonoBehaviour
+public class CommandServer : CommandServerBase
 {
 	public GameObject Car;
-	public Camera FrontFacingCamera;
-	private SocketIOComponent _socket;
-	private CarController _carController;
+	// public Camera FrontFacingCamera; // now in base
+	// private SocketIOComponent _socket; // moved to base
+	private CarController carController; // moved to base
 	private perfect_controller point_path;
 	private CarTraffic car_traffic;
-
-
-	// Convert angle (degrees) from Unity orientation to 
-	//            90
-	//
-	//  180                   0/360
-	//
-	//            270
-	//
-	// This is the standard format used in mathematical functions.
-	float convertAngle(float psi) {
-		if (psi >= 0 && psi <= 90) {
-			return 90 - psi;
-		}
-		else if (psi > 90 && psi <= 180) {
-			return 90 + 270 - (psi - 90);
-		}
-		else if (psi > 180 && psi <= 270) {
-			return 180 + 90 - (psi - 180);
-		}
-		return 270 - 90 - (psi - 270);
-	}
 
 	// Use this for initialization
 	void Start()
 	{
-		_socket = GameObject.Find("SocketIO").GetComponent<SocketIOComponent>();
-		_socket.On("open", OnOpen);
-		_socket.On("manual", onManual);
-		_socket.On("control", Control);
-		_carController = Car.GetComponent<CarController>();
+		InitSocket();
+		RegisterHandler("open", OnOpen);
+		RegisterHandler("manual", onManual);
+		RegisterHandler("control", Control);
+		carController = Car.GetComponent<CarController>();
 		point_path = Car.GetComponent<perfect_controller>();
 		car_traffic = Car.GetComponent<CarTraffic>();
-
 	}
 
 	void OnOpen(SocketIOEvent obj)
@@ -60,7 +37,6 @@ public class CommandServer : MonoBehaviour
 	{
 		Debug.Log("Connection Closed");
 		point_path.CloseScript ();
-
 	}
 
 	// 
@@ -95,8 +71,7 @@ public class CommandServer : MonoBehaviour
 		EmitTelemetry (obj);
 	}
 		
-
-	void EmitTelemetry(SocketIOEvent obj)
+	protected override void EmitTelemetry(SocketIOEvent obj)
 	{
 		UnityMainThreadDispatcher.Instance().Enqueue(() =>
 		{
@@ -104,7 +79,7 @@ public class CommandServer : MonoBehaviour
 			//print("Attempting to Send...");
 			// send only if it's not being manually driven
 			if ( !point_path.isServerProcess() ) {
-				_socket.Emit("telemetry", new JSONObject());
+				socket.Emit("telemetry", new JSONObject());
 				
 
 			}
@@ -118,8 +93,8 @@ public class CommandServer : MonoBehaviour
 				// localization of car
 				data["x"] = new JSONObject(Car.transform.position.x);
 				data["y"] = new JSONObject(Car.transform.position.z);
-				data["yaw"] = new JSONObject (convertAngle(Car.transform.rotation.eulerAngles.y));
-				data["speed"] = new JSONObject(_carController.CurrentSpeed);
+				data["yaw"] = new JSONObject (ConvertUnityYawToMathAngle(Car.transform.rotation.eulerAngles.y));
+				data["speed"] = new JSONObject(carController.CurrentSpeed);
 
 				CarAIControl carAI = (CarAIControl) Car.GetComponent(typeof(CarAIControl));
 
@@ -175,7 +150,7 @@ public class CommandServer : MonoBehaviour
 				//data["steering_angle"] = new JSONObject(_carController.CurrentSteerAngle);
 				//data["throttle"] = new JSONObject(_carController.AccelInput);
 				//data["speed"] = new JSONObject(_carController.CurrentSpeed);
-				_socket.Emit("telemetry", new JSONObject(data));
+				socket.Emit("telemetry", new JSONObject(data));
 			}
 		});
 

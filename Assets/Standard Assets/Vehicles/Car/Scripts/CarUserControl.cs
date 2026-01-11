@@ -5,23 +5,19 @@ using System.Collections;
 namespace UnityStandardAssets.Vehicles.Car
 {
     [RequireComponent(typeof(CarController))]
-    public class CarUserControl : MonoBehaviour
+    public class CarUserControl : CarUserControlBase
     {
         private CarController m_Car;
-        private Steering s;
 
         private void Awake()
         {
             m_Car = GetComponent<CarController>();
-            s = new Steering();
-            s.Start();
+            base.Awake();
         }
 
-        private void FixedUpdate()
+        protected override void ApplyMove(float h, float v)
         {
-            s.UpdateValues();
-            m_Car.Move(s.H, s.V, s.V, 0f);
-
+            m_Car.Move(h, v, v, 0f);
         }
     }
 }

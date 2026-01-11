@@ -8,51 +8,15 @@ using System.Collections;
 namespace UnityStandardAssets.Vehicles.Car
 {
     [RequireComponent (typeof(CarController))]
-    public class CarAIControl : MonoBehaviour
+    public class CarAIControl : CarAIControlBase
     {
-        public enum BrakeCondition
-        {
-            NeverBrake,
-            // the car simply accelerates at full throttle all the time.
-            TargetDirectionDifference,
-            // the car will brake according to the upcoming change in direction of the target. Useful for route-based AI, slowing for corners.
-            TargetDistance,
-            // the car will brake as it approaches its target, regardless of the target's direction. Useful if you want the car to
-            // head for a stationary target and come to rest when it arrives there.
-        }
-
-        // This script provides input to the car controller in the same way that the user control script does.
+		// This script provides input to the car controller in the same way that the user control script does.
         // As such, it is really 'driving' the car, with no special physics or animation tricks to make the car behave properly.
 
         // "wandering" is used to give the cars a more human, less robotic feel. They can waver slightly
         // in speed and direction while driving towards their target.
 
-        [SerializeField] [Range (0, 1)] private float m_CautiousSpeedFactor = 0.05f;
-        // percentage of max speed to use when being maximally cautious
-        [SerializeField] [Range (0, 180)] private float m_CautiousMaxAngle = 50f;
-        // angle of approaching corner to treat as warranting maximum caution
-        [SerializeField] private float m_CautiousMaxDistance = 100f;
-        // distance at which distance-based cautiousness begins
-        [SerializeField] private float m_CautiousAngularVelocityFactor = 30f;
-        // how cautious the AI should be when considering its own current angular velocity (i.e. easing off acceleration if spinning!)
-        [SerializeField] private float m_SteerSensitivity = 0.05f;
-        // how sensitively the AI uses steering input to turn to the desired direction
-        [SerializeField] private float m_AccelSensitivity = 0.04f;
-        // How sensitively the AI uses the accelerator to reach the current desired speed
-        [SerializeField] private float m_BrakeSensitivity = 1f;
-        // How sensitively the AI uses the brake to reach the current desired speed
-        [SerializeField] private float m_LateralWanderDistance = 3f;
-        // how far the car will wander laterally towards its target
-        [SerializeField] private float m_LateralWanderSpeed = 0.1f;
-        // how fast the lateral wandering will fluctuate
-        [SerializeField] [Range (0, 1)] private float m_AccelWanderAmount = 0.1f;
-        // how much the cars acceleration will wander
-        [SerializeField] private float m_AccelWanderSpeed = 0.1f;
-        // how fast the cars acceleration wandering will fluctuate
-        [SerializeField] private BrakeCondition m_BrakeCondition = BrakeCondition.TargetDistance;
-        // what should the AI consider when accelerating/braking?
-        [SerializeField] private bool m_Driving;
-        // whether the AI is currently actively driving or stopped.
+		// whether the AI is currently actively driving or stopped.
 		[SerializeField] private List<Transform> waypoints;
 
 		public GameObject front_sensor;
@@ -72,17 +36,18 @@ namespace UnityStandardAssets.Vehicles.Car
 
 		public GameObject mycar;
 
-        private float m_RandomPerlin;
-        // A random value for the car to base its wander on (so that AI cars don't all wander in the same pattern)
         private CarController m_CarController;
+
+		// protected float m_RandomPerlin;
+
         // Reference to actual car controller we are controlling
-        private float m_AvoidOtherCarTime;
+        // private float m_AvoidOtherCarTime;
         // time until which to avoid the car we recently collided with
         private float m_AvoidOtherCarSlowdown;
         // how much to slow down due to colliding with another car, whilst avoiding
-        private float m_AvoidPathOffset;
+        // private float m_AvoidPathOffset;
         // direction (-1 or 1) in which to offset path to avoid other car, whilst avoiding
-        private Rigidbody m_Rigidbody;
+        // private Rigidbody m_Rigidbody;
 
 		public CarController follow_car;
 		// the car that we are looping with
@@ -162,6 +127,8 @@ namespace UnityStandardAssets.Vehicles.Car
 			//flag new data is ready to process
 			simulator_process = false;
 
+			// Initialize shared AI state
+			InitAICommon();
         }
 
 		public void Spawn(List<GameObject> cars)

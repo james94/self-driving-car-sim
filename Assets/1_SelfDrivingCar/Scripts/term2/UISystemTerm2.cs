@@ -4,30 +4,29 @@ using System.Collections;
 using UnityStandardAssets.Vehicles.Car;
 using UnityEngine.SceneManagement;
 
-public class UISystemTerm2 : MonoSingleton<UISystem> {
+public class UISystemTerm2 : UISystemBase {
 
     public CarControllerTerm2 carController;
     public string GoodCarStatusMessage;
     public string BadSCartatusMessage;
-    public Text MPH_Text;
-    public Image MPH_Animation;
+    // MPH_Text and MPH_Animation are now inherited from UISystemBase
     public Text Angle_Text;
     public Text RecordStatus_Text;
-	public Text DriveStatus_Text;
-	public Text SaveStatus_Text;
+    public Text DriveStatus_Text;
+    public Text SaveStatus_Text;
     public GameObject RecordingPause; 
-	public GameObject RecordDisabled;
-	public bool isTraining = false;
+    public GameObject RecordDisabled;
+    public bool isTraining = false;
 
     private bool recording;
-    private float topSpeed;
-	private bool saveRecording;
+    // topSpeed is now inherited from UISystemBase
+    private bool saveRecording;
 
 
     // Use this for initialization
     void Start() {
 		Debug.Log (isTraining);
-        topSpeed = carController.MaxSpeed;
+        InitTopSpeed(carController.MaxSpeed);
         recording = false;
         RecordingPause.SetActive(false);
 		RecordStatus_Text.text = "RECORD";
@@ -45,13 +44,6 @@ public class UISystemTerm2 : MonoSingleton<UISystem> {
     public void SetAngleValue(float value)
     {
         Angle_Text.text = value.ToString("N2") + "°";
-    }
-
-    public void SetMPHValue(float value)
-    {
-        MPH_Text.text = value.ToString("N2");
-        //Do something with value for fill amounts
-        MPH_Animation.fillAmount = value/topSpeed;
     }
 
     public void ToggleRecording()
@@ -82,6 +74,12 @@ public class UISystemTerm2 : MonoSingleton<UISystem> {
     {
         SetMPHValue(carController.CurrentSpeed);
         SetAngleValue(carController.CurrentSteerAngle);
+    }
+
+    // Override Escape handling to auto-select Term menu
+    protected override void OnEscapePressed()
+    {
+        ReturnToAppropriateMenu();
     }
 
 	// Update is called once per frame
@@ -122,12 +120,8 @@ public class UISystemTerm2 : MonoSingleton<UISystem> {
 			}
 		}
 
-	    if(Input.GetKeyDown(KeyCode.Escape))
-        {
-            //Do Menu Here
-            // SceneManager.LoadScene("MenuScene");
-            ReturnToAppropriateMenu();
-        }
+	    // Replace inline Escape handling with shared helper
+        HandleEscapeKey();
 
         if (Input.GetKeyDown(KeyCode.Return))
         {
@@ -152,27 +146,6 @@ public class UISystemTerm2 : MonoSingleton<UISystem> {
 
         Debug.Log($"isTerm1Scene = {isTerm1Scene}");
 
-        // bool isTerm1Scene = currentScene.Contains("LakeTrack") || currentScene.Contains("JungleTrack");
-
         SceneManager.LoadScene(isTerm1Scene ? "MenuScene" : "MenuSceneTerm2");
     }
-
-    // Automatic Term Detection with MenuOptions (Under Development)
-    // void ReturnToAppropriateMenu()
-    // {
-    //     // Get term state from persistent MenuOptions
-    //     bool isTerm1 = MenuOptions.GetTerm();
-
-    //     // Verify scene existence first
-    //     string targetScene = isTerm1 ? "MenuScene" : "MenuSceneTerm2";
-    //     if(Application.CanStreamedLevelBeLoaded(targetScene))
-    //     {
-    //         SceneManager.LoadScene(targetScene);
-    //     }
-    //     else
-    //     {
-    //         Debug.LogError($"Missing scene: {targetScene}");
-    //         SceneManager.LoadScene("MenuScene"); // Fallback to Term1
-    //     }
-    // }
 }

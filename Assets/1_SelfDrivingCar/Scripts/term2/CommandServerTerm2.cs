@@ -7,26 +7,29 @@ using UnityStandardAssets.Vehicles.Car;
 using System.Security.AccessControl;
 using System.Globalization;
 
-public class CommandServerTerm2 : MonoBehaviour
+public class CommandServerTerm2 : CommandServerBase
 {
-	public CarRemoteControl CarRemoteControl;
-	public Camera FrontFacingCamera;
-	private SocketIOComponent _socket;
-	private CarController _carController;
+	public CarRemoteControlTerm2 CarRemoteControl;
+	// FrontFacingCamera moved to base
+	// private SocketIOComponent _socket; // moved to base
+	// private CarController _carController; // moved to base
+
+	protected CarControllerTerm2 carController;
 
 	// Use this for initialization
 	void Start()
 	{
-		_socket = GameObject.Find("SocketIO").GetComponent<SocketIOComponent>();
-		_socket.On("open", OnOpen);
-		_socket.On("steer", OnSteer);
-		_socket.On("manual", onManual);
-		_carController = CarRemoteControl.GetComponent<CarController>();
+		InitSocket();
+		RegisterHandler("open", OnOpen);
+		RegisterHandler("steer", OnSteer);
+		RegisterHandler("manual", onManual);
+		carController = CarRemoteControl.GetComponent<CarControllerTerm2>();
 	}
 
 	// Update is called once per frame
 	void Update()
 	{
+		// ...existing code...
 	}
 
 	void OnOpen(SocketIOEvent obj)
@@ -81,16 +84,16 @@ public class CommandServerTerm2 : MonoBehaviour
 		}
 	}
 
-	void EmitTelemetry(SocketIOEvent obj)
+	protected override void EmitTelemetry(SocketIOEvent obj)
 	{
-		UnityMainThreadDispatcher.Instance().Enqueue(() =>
+		Enqueue(() =>
 		{
 			try {
 
 				print("Attempting to Send...");
 				// send only if it's not being manually driven
 				if ((Input.GetKey(KeyCode.W)) || (Input.GetKey(KeyCode.S))) {
-					_socket.Emit("telemetry", new JSONObject());
+					socket.Emit("telemetry", new JSONObject());
 				}
 				else {
 					// Add CTE calculation (replace with your actual CTE logic)
@@ -101,18 +104,18 @@ public class CommandServerTerm2 : MonoBehaviour
 
 					// Add fields individually
 					telemetryData.AddField("cte", currentCTE);
-					telemetryData.AddField("steering_angle", _carController.CurrentSteerAngle);
-					telemetryData.AddField("throttle", _carController.AccelInput);
-					telemetryData.AddField("speed", _carController.CurrentSpeed);
-					telemetryData.AddField("image", Convert.ToBase64String(CameraHelper.CaptureFrame(FrontFacingCamera)));
-					_socket.Emit("telemetry", telemetryData);
+					telemetryData.AddField("steering_angle", carController.CurrentSteerAngle);
+					telemetryData.AddField("throttle", carController.AccelInput);
+					telemetryData.AddField("speed", carController.CurrentSpeed);
+					telemetryData.AddField("image", CaptureFrameBase64(FrontFacingCamera));
+					// telemetryData.AddField("image", Convert.ToBase64String(CameraHelper.CaptureFrame(FrontFacingCamera)));
+					
+					socket.Emit("telemetry", telemetryData);
 				}
 
 			} catch(Exception ex) {
 				Debug.LogError($"Telemetry error: {ex}");
 			}
-
-
 		});
 	}
 

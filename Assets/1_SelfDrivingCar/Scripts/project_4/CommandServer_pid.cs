@@ -5,23 +5,23 @@ using UnityStandardAssets.Vehicles.Car;
 using System;
 using UnityEngine.SceneManagement;
 
-public class CommandServer_pid : MonoBehaviour
+public class CommandServer_pid : CommandServerBase
 {
-	public CarRemoteControl CarRemoteControl;
-	public Camera FrontFacingCamera;
+	public CarRemoteControlTerm2 CarRemoteControl;
+	// public Camera FrontFacingCamera;
 	private SocketIOComponent _socket;
-	private CarController _carController;
+	private CarControllerTerm2 _carController;
 	private WaypointTracker_pid wpt;
 
 	// Use this for initialization
 	void Start()
 	{
-		_socket = GameObject.Find("SocketIO").GetComponent<SocketIOComponent>();
-		_socket.On("open", OnOpen);
-		_socket.On ("reset", OnReset);
-		_socket.On("steer", OnSteer);
-		_socket.On("manual", onManual);
-		_carController = CarRemoteControl.GetComponent<CarController>();
+		InitSocket();
+		RegisterHandler("open", OnOpen);
+		RegisterHandler("reset", OnReset);
+		RegisterHandler("steer", OnSteer);
+		RegisterHandler("manual", onManual);
+		_carController = CarRemoteControl.GetComponent<CarControllerTerm2>();
 		wpt = new WaypointTracker_pid ();
 	}
 
@@ -53,33 +53,58 @@ public class CommandServer_pid : MonoBehaviour
 	{
         Debug.Log("Steering data event ...");
 		JSONObject jsonObject = obj.data;
-		CarRemoteControl.SteeringAngle = float.Parse(jsonObject.GetField("steering_angle").ToString());
-		CarRemoteControl.Acceleration = float.Parse(jsonObject.GetField("throttle").ToString());
+
+		float steering, throttle;
+		bool sOk = TryGetFloat(jsonObject, "steering_angle", out steering);
+		bool tOk = TryGetFloat(jsonObject, "throttle", out throttle);
+		if (!sOk || !tOk)
+		{
+			Debug.LogError("Invalid steer/throttle payload");
+			return;
+		}
+
+		CarRemoteControl.SteeringAngle = steering;
+		CarRemoteControl.Acceleration = throttle;
+
 		var steering_bias = 1.0f * Mathf.Deg2Rad;
 		CarRemoteControl.SteeringAngle += steering_bias;
+
 		EmitTelemetry(obj);
 	}
 
-	void EmitTelemetry(SocketIOEvent obj)
+	protected override void EmitTelemetry(SocketIOEvent obj)
 	{
-		UnityMainThreadDispatcher.Instance().Enqueue(() =>
+		Enqueue(() =>
 		{
-			print("Attempting to Send...");
-			// send only if it's not being manually driven
-			if ((Input.GetKey(KeyCode.W)) || (Input.GetKey(KeyCode.S))) {
-				_socket.Emit("telemetry", new JSONObject());
-			} else {
-				// Collect Data from the Car
-				Dictionary<string, string> data = new Dictionary<string, string>();
-				var cte = wpt.CrossTrackError (_carController);
-				data["steering_angle"] = _carController.CurrentSteerAngle.ToString("N4");
-				data["throttle"] = _carController.AccelInput.ToString("N4");
-				data["speed"] = _carController.CurrentSpeed.ToString("N4");
-				data["cte"] = cte.ToString("N4");
-				data["image"] = Convert.ToBase64String(CameraHelper.CaptureFrame(FrontFacingCamera));
-				_socket.Emit("telemetry", new JSONObject(data));
+			try
+			{
+				// send only if it's not being manually driven
+				if (IsManualInputActive())
+				{
+					socket.Emit("telemetry", new JSONObject());
+				}
+				else
+				{
+					var telemetryData = new JSONObject(JSONObject.Type.OBJECT);
+
+					// Cross-track error and car signals
+					float cte = wpt.CrossTrackError(_carController);
+					telemetryData.AddField("cte", cte);
+					telemetryData.AddField("steering_angle", _carController.CurrentSteerAngle);
+					telemetryData.AddField("throttle", _carController.AccelInput);
+					telemetryData.AddField("speed", _carController.CurrentSpeed);
+
+					// Camera image (base64)
+					telemetryData.AddField("image", CaptureFrameBase64(FrontFacingCamera));
+					// telemetryData.AddField("image", Convert.ToBase64String(CameraHelper.CaptureFrame(FrontFacingCamera)));
+
+					socket.Emit("telemetry", telemetryData);
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"Telemetry error: {ex}");
 			}
 		});
-				
 	}
 }

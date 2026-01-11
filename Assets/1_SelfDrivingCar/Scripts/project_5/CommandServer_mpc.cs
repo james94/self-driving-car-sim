@@ -4,12 +4,11 @@ using SocketIO;
 using UnityStandardAssets.Vehicles.Car;
 using System;
 
-public class CommandServer_mpc : MonoBehaviour
+public class CommandServer_mpc : CommandServerBase
 {
-	public CarRemoteControl CarRemoteControl;
-	public Camera FrontFacingCamera;
-	private SocketIOComponent _socket;
-	private CarController _carController;
+	public CarRemoteControlTerm2 CarRemoteControl;
+	// public Camera FrontFacingCamera;
+	private CarControllerTerm2 _carController;
 	private PointTracker point_path;
 	private WaypointTracker_mpc wpt;
 	private int polyOrder;
@@ -17,35 +16,14 @@ public class CommandServer_mpc : MonoBehaviour
 	// Use this for initialization
 	void Start()
 	{
-		_socket = GameObject.Find("SocketIO").GetComponent<SocketIOComponent>();
-		_socket.On("open", OnOpen);
-		_socket.On("steer", OnSteer);
-		_socket.On("manual", onManual);
-		_carController = CarRemoteControl.GetComponent<CarController>();
+		InitSocket();
+		RegisterHandler("open", OnOpen);
+		RegisterHandler("steer", OnSteer);
+		RegisterHandler("manual", onManual);
+		_carController = CarRemoteControl.GetComponent<CarControllerTerm2>();
 		point_path = CarRemoteControl.GetComponent<PointTracker>();
 		wpt = new WaypointTracker_mpc ();
 		polyOrder = 5;
-	}
-
-	// Convert angle (degrees) from Unity orientation to 
-	//            90
-	//
-	//  180                   0/360
-	//
-	//            270
-	//
-	// This is the standard format used in mathematical functions.
-	float convertAngle(float psi) {
-		if (psi >= 0 && psi <= 90) {
-			return 90 - psi;
-		}
-		else if (psi > 90 && psi <= 180) {
-			return 90 + 270 - (psi - 90);
-		}
-		else if (psi > 180 && psi <= 270) {
-			return 180 + 90 - (psi - 180);
-		}
-		return 270 - 90 - (psi - 270);
 	}
 
 	// Update is called once per frame
@@ -59,7 +37,6 @@ public class CommandServer_mpc : MonoBehaviour
 		EmitTelemetry(obj);
 	}
 
-	// 
 	void onManual(SocketIOEvent obj)
 	{
         Debug.Log("Manual driving event ...");
@@ -70,82 +47,100 @@ public class CommandServer_mpc : MonoBehaviour
 	{
         Debug.Log("Steering data event ...");
 		JSONObject jsonObject = obj.data;
-		CarRemoteControl.SteeringAngle = float.Parse(jsonObject.GetField("steering_angle").ToString());
-		CarRemoteControl.Acceleration = float.Parse(jsonObject.GetField("throttle").ToString());
 
-		//string next_x = jsonObject.GetField ("next_x").ToString ();
-		//string next_y = jsonObject.GetField ("next_y").ToString ();
-
-		var next_x = jsonObject.GetField ("next_x");
-		var next_y = jsonObject.GetField ("next_y");
-		List<float> my_next_x = new List<float> ();
-		List<float> my_next_y = new List<float> ();
-
-		for (int i = 0; i < next_x.Count; i++) 
+		float steering, throttle;
+		if (!TryGetFloat(jsonObject, "steering_angle", out steering) ||
+		    !TryGetFloat(jsonObject, "throttle", out throttle))
 		{
-			my_next_x.Add (float.Parse((next_x [i]).ToString()));
-			my_next_y.Add (float.Parse((next_y [i]).ToString()));
-		}
-		point_path.setNextPoint( my_next_x, my_next_y ); 
-
-		var mpc_x = jsonObject.GetField ("mpc_x");
-		var mpc_y = jsonObject.GetField ("mpc_y");
-		List<float> my_mpc_x = new List<float> ();
-		List<float> my_mpc_y = new List<float> ();
-
-		for (int i = 0; i < mpc_x.Count; i++) 
-		{
-			my_mpc_x.Add (float.Parse((mpc_x [i]).ToString()));
-			my_mpc_y.Add (float.Parse((mpc_y [i]).ToString()));
+			Debug.LogError("Invalid steer/throttle payload");
+			return;
 		}
 
-		point_path.setMpcPoint( my_mpc_x, my_mpc_y ); 
+		CarRemoteControl.SteeringAngle = steering;
+		CarRemoteControl.Acceleration = throttle;
+
+		// Next points
+		var next_x = jsonObject.GetField("next_x");
+		var next_y = jsonObject.GetField("next_y");
+		List<float> my_next_x = new List<float>();
+		List<float> my_next_y = new List<float>();
+		for (int i = 0; i < next_x.Count; i++)
+		{
+			my_next_x.Add(float.Parse(next_x[i].ToString()));
+			my_next_y.Add(float.Parse(next_y[i].ToString()));
+		}
+		point_path.setNextPoint(my_next_x, my_next_y);
+
+		// MPC points
+		var mpc_x = jsonObject.GetField("mpc_x");
+		var mpc_y = jsonObject.GetField("mpc_y");
+		List<float> my_mpc_x = new List<float>();
+		List<float> my_mpc_y = new List<float>();
+		for (int i = 0; i < mpc_x.Count; i++)
+		{
+			my_mpc_x.Add(float.Parse(mpc_x[i].ToString()));
+			my_mpc_y.Add(float.Parse(mpc_y[i].ToString()));
+		}
+		point_path.setMpcPoint(my_mpc_x, my_mpc_y);
 
 		EmitTelemetry(obj);
 	}
 
-	void EmitTelemetry(SocketIOEvent obj)
+	protected override void EmitTelemetry(SocketIOEvent obj)
 	{
-		UnityMainThreadDispatcher.Instance().Enqueue(() =>
+		Enqueue(() =>
 		{
-			print("Attempting to Send...");
-			// send only if it's not being manually driven
-			if ((Input.GetKey(KeyCode.W)) || (Input.GetKey(KeyCode.S))) {
-				_socket.Emit("telemetry", new JSONObject());
-			} else {
-				// Collect Data from the Car
-				Dictionary<string, JSONObject> data = new Dictionary<string, JSONObject>();
-				var cte = wpt.CrossTrackError (_carController);
-				Debug.Log(string.Format("In between waypoint {0} and {1}", wpt.prev_wp, wpt.next_wp));
-				var pos = _carController.Position();
-				var psi = _carController.Orientation().eulerAngles.y;
-				
-				// Waypoints data
-				var ptsx = new List<JSONObject>();
-				var ptsy = new List<JSONObject>();
-				for (int i = wpt.prev_wp; i < wpt.prev_wp+polyOrder+1; i++) {
-					ptsx.Add(new JSONObject(wpt.waypoints[i%wpt.waypoints.Count].x));
-					ptsy.Add(new JSONObject(wpt.waypoints[i%wpt.waypoints.Count].z));
+			try
+			{
+				if (IsManualInputActive())
+				{
+					socket.Emit("telemetry", new JSONObject());
 				}
-				data["ptsx"] = new JSONObject(ptsx.ToArray());
-				data["ptsy"] = new JSONObject(ptsy.ToArray());
+				else
+				{
+					var telemetryData = new JSONObject(JSONObject.Type.OBJECT);
 
-                // Orientations
-                data["psi_unity"] = new JSONObject(psi * Mathf.Deg2Rad);
-				data["psi"] = new JSONObject(convertAngle(psi) * Mathf.Deg2Rad);
+					// Waypoints arrays
+					JSONObject ptsx = new JSONObject(JSONObject.Type.ARRAY);
+					JSONObject ptsy = new JSONObject(JSONObject.Type.ARRAY);
+					for (int i = wpt.prev_wp; i < wpt.prev_wp + polyOrder + 1; i++)
+					{
+						int idx = i % wpt.waypoints.Count;
+						ptsx.Add(wpt.waypoints[idx].x);
+						ptsy.Add(wpt.waypoints[idx].z);
+					}
+					telemetryData.AddField("ptsx", ptsx);
+					telemetryData.AddField("ptsy", ptsy);
 
-                // Global position.
-                data["x"] = new JSONObject(pos.x);
-                data["y"] = new JSONObject(pos.z);
-                // Steering angle
-				data["steering_angle"] = new JSONObject(_carController.CurrentSteerAngle * Mathf.Deg2Rad);
-                // Throttle
-				data["throttle"] = new JSONObject(_carController.AccelInput);
-                // Velocity
-				data["speed"] = new JSONObject(_carController.CurrentSpeed);
-				_socket.Emit("telemetry", new JSONObject(data));
+					// Orientation
+					var psiDeg = _carController.Orientation().eulerAngles.y;
+					telemetryData.AddField("psi_unity", psiDeg * Mathf.Deg2Rad);
+					telemetryData.AddField("psi", ConvertUnityYawToMathAngle(psiDeg) * Mathf.Deg2Rad);
+
+					// Position
+					var pos = _carController.Position();
+					telemetryData.AddField("x", pos.x);
+					telemetryData.AddField("y", pos.z);
+
+					// Signals
+					telemetryData.AddField("steering_angle", _carController.CurrentSteerAngle * Mathf.Deg2Rad);
+					telemetryData.AddField("throttle", _carController.AccelInput);
+					telemetryData.AddField("speed", _carController.CurrentSpeed);
+
+					// CTE
+					float cte = wpt.CrossTrackError(_carController);
+					telemetryData.AddField("cte", cte);
+
+					// Optional: image capture if needed for MPC
+					// telemetryData.AddField("image", CaptureFrameBase64(FrontFacingCamera));
+
+					socket.Emit("telemetry", telemetryData);
+				}
+			}
+			catch (Exception ex)
+			{
+				Debug.LogError($"Telemetry error: {ex}");
 			}
 		});
-				
 	}
 }

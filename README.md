@@ -31,11 +31,11 @@ Switch to **Unity_URP_2022_3_Term2** branch to access Term 2. This is PID Contro
 
 ![pid_control_lake_track](./docs/images/pid_control_lake_track_view_urp_2022_3_60f1_view1.png)
 
-- **Figure 3**: PID Control Car on Lake Track
+- **Figure 3**: PID Control Car on Lake Track Menu View
 
 ![mpc_control_lake_track](./docs/images/mpc_control_lake_track_view_urp_2022_3_60f1_view1.png)
 
-- **Figure 4**: MPC Control Car on Lake Track
+- **Figure 4**: MPC Control Car on Lake Track Menu View
 
 Also added support for switching to Extended Kalman Filter, Unscented Kalman filters, Particle Filter scenes.
 
@@ -48,6 +48,10 @@ Switch to **Unity_URP_2022_3_Term3** branch to access Term 3. This is Path Plann
 ![highway_driving_track](./docs/images/highway_driving_view_urp_2022_3_62f3.png)
 
 - **Figure 5**: Path Planner Car on Highway Driving Track
+
+![](./docs/images/path_planner_highway_menu_view.png)
+
+- **Figure 6**: Path Planner Car on Highway Driving Track Menu View
 
 I had to switch some C# scripts related to the Highway Driving scene to be standalone Term 3 to get the simulation running successfully. I plan to update the C# scripts, so we can launch and play the Unity scenes from Term 1 and Term 2 while still being able to launch Highway Driving scene from Term 3.
 

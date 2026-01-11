@@ -4,14 +4,13 @@ using System.Collections;
 using UnityStandardAssets.Vehicles.Car;
 using UnityEngine.SceneManagement;
 
-public class UISystem : MonoSingleton<UISystem> {
+public class UISystem : UISystemBase {
 
     public CarController carController;
 	public Camera mainCamera;
     public string GoodCarStatusMessage;
     public string BadSCartatusMessage;
-    public Text MPH_Text;
-    public Image MPH_Animation;
+	
 	public Text AccT_Text;
 	public Text AccN_Text;
 	public Text Acc_Text;
@@ -31,7 +30,6 @@ public class UISystem : MonoSingleton<UISystem> {
 	public Text JerkStatus_Text;
 
     private bool recording;
-    private float topSpeed;
 	private bool saveRecording;
 
 	private bool auto_drive;
@@ -41,7 +39,7 @@ public class UISystem : MonoSingleton<UISystem> {
     // Use this for initialization
     void Start() {
 		
-        topSpeed = carController.MaxSpeed;
+        InitTopSpeed(carController.MaxSpeed);
         
 		AccStatus_Text.text = "";
 		JerkStatus_Text.text = "";
@@ -54,12 +52,6 @@ public class UISystem : MonoSingleton<UISystem> {
 		 
     }
 
-    public void SetMPHValue(float value)
-    {
-        MPH_Text.text = value.ToString("N2");
-        //Do something with value for fill amounts
-        MPH_Animation.fillAmount = value/topSpeed;
-    }
 	public void SetAccTValue(float value)
 	{
 		AccT_Text.text = "AccT: "+value.ToString ("N0")+" m/s^2";
@@ -189,11 +181,7 @@ public class UISystem : MonoSingleton<UISystem> {
 	// Update is called once per frame
 	void Update () {
 
-	    if(Input.GetKeyDown(KeyCode.Escape))
-        {
-            //Do Menu Here
-            SceneManager.LoadScene("MenuScene");
-        }
+	    HandleEscapeKey();
 
         UpdateCarValues();
     }

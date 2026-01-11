@@ -30,7 +30,7 @@ namespace UnityStandardAssets.Vehicles.Car
         }
 
         // Compute the next waypoint we should go to
-        public int NextWaypoint(CarController cc)
+        public int NextWaypoint(CarControllerTerm2 cc)
         {
             Vector3 p = cc.transform.position;
             float closestLen = 100000; // large number
@@ -62,7 +62,7 @@ namespace UnityStandardAssets.Vehicles.Car
             return closestWaypoint;
         }
 
-        public float CrossTrackError(CarController cc)
+        public float CrossTrackError(CarControllerTerm2 cc)
         {
             next_wp = NextWaypoint(cc);
             var pos = cc.transform.position;
