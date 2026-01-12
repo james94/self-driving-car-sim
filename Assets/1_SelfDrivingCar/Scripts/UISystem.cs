@@ -209,5 +209,42 @@ public class UISystem : UISystemBase {
 
 		carAI.ResetDistance ();
 	}
-			
+	// Override Escape handling to auto-select the appropriate menu (PathPlanning -> MenuSceneTerm2)
+    protected override void OnEscapePressed()
+    {
+        ReturnToAppropriateMenu();
+    }
+
+    // Decide destination menu by active scene
+    void ReturnToAppropriateMenu()
+    {
+        string scene = SceneManager.GetActiveScene().name;
+
+        // Term 1 scenes
+        string[] term1Scenes = {
+            "LakeTrackTraining","LakeTrackAutonomous",
+            "JungleTrackTraining","JungleTrackAutonomous"
+        };
+
+        // Term 2 scenes (including PathPlanning as requested)
+        string[] term2Scenes = {
+            "EKF_project","UKF_project","particle_filter_v2",
+            "LakeTrackAutonomous_pid","LakeTrackAutonomous_mpc",
+            "PathPlanning"
+        };
+
+        // Route based on membership
+        if (System.Array.Exists(term1Scenes, s => s == scene))
+        {
+            SceneManager.LoadScene("MenuScene");
+        }
+        else if (System.Array.Exists(term2Scenes, s => s == scene))
+        {
+            SceneManager.LoadScene("MenuSceneTerm2");
+        }
+        else
+        {
+            SceneManager.LoadScene("MenuSceneTerm3");
+        }
+    }
 }
