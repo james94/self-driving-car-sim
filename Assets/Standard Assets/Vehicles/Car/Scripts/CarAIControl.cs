@@ -327,6 +327,7 @@ namespace UnityStandardAssets.Vehicles.Car
 
 		public float NextWaypointDistance()
 		{
+			if (waypoints == null || waypoints.Count == 0) return float.PositiveInfinity;
 			int nextwp = NextWaypoint(transform.position.x,transform.position.z);
 			return Vector3.Distance (transform.position, waypoints [nextwp].transform.position);
 		}
@@ -433,14 +434,39 @@ namespace UnityStandardAssets.Vehicles.Car
 			staged = true;
 		}
 
-		//check if lane is clear and safe for lane change
+		//check if lane is clear and safe for lane change (defensive wrapper)
 		private bool lane_clear(int this_lane)
 		{
 
-			CarTraffic car_traffic = follow_car.GetComponent<CarTraffic> ();
+			// Clamp lane to valid range [0,2]
+			int laneClamped = Mathf.Clamp(this_lane, 0, 2);
 
-			return car_traffic.lane_clear(mycar,forward,this_lane);
-			//return false;
+			if (follow_car == null)
+			{
+				// no leader/traffic context -> treat as not clear
+				return false;
+			}
+
+			var carTraffic = follow_car.GetComponent<CarTraffic>();
+			if (carTraffic == null)
+			{
+				return false;
+			}
+
+			try
+			{
+				return carTraffic.lane_clear(mycar, forward, laneClamped);
+			}
+			catch (ArgumentOutOfRangeException ex)
+			{
+				Debug.LogWarning($"lane_clear out-of-range (lane={laneClamped}). Suppressing lane change. {ex.Message}");
+				return false;
+			}
+			catch (Exception ex)
+			{
+				Debug.LogWarning($"lane_clear failed (lane={laneClamped}): {ex.Message}");
+				return false;
+			}
 		}
 			
 		//wrap index around list
@@ -466,6 +492,12 @@ namespace UnityStandardAssets.Vehicles.Car
 
         public void FixedUpdate ()
         {
+			// Guard against missing/empty waypoint lists to avoid indexing errors downstream
+			if ((waypoints == null || waypoints.Count == 0))
+			{
+				// nothing to do without a valid route
+				return;
+			}
 
 			if (!maincar) {
 
@@ -535,91 +567,78 @@ namespace UnityStandardAssets.Vehicles.Car
 						}
 				
 
-						if (m_CarController.CurrentSpeed > 15 && (lane_change_time >= 100) && NextWaypointDistance() < 15 ) 
+						// Only attempt lane change when we have valid waypoints and enough spacing
+						if (m_CarController.CurrentSpeed > 15 && (lane_change_time >= 100) && NextWaypointDistance() < 15 )
 						{
-
 
 
 							//try to merge right
 							if (lane == 0)
 							{
-								if (lane_clear (lane + 1)) 
+								if (lane_clear (lane + 1))
 								{
 									lane1_clear++;
 								}
-
-								else 
+								else
 								{
-									lane0_clear = 0;
-									lane1_clear = 0;
-									lane2_clear = 0;
+									lane0_clear = 0; lane1_clear = 0; lane2_clear = 0;
 								}
 
-								if (lane1_clear>50) 
+								if (lane1_clear>50)
 								{
-									lane++;
+									lane = 1;
 									lane1_clear = 0;
 									lane_change_time = 0;
 								}
-								//try to merge left
-							} 
-							else if (lane == 1) 
+							}
+							else if (lane == 1)
 							{
-								if (lane_clear (lane - 1)) 
+								if (lane_clear (lane - 1))
 								{
 									lane0_clear++;
 								}
-
-								else 
+								else
 								{
-									lane0_clear = 0;
-									lane1_clear = 0;
-									lane2_clear = 0;
+									lane0_clear = 0; lane1_clear = 0; lane2_clear = 0;
 								}
 
-								if (lane0_clear>50) 
+								if (lane0_clear>50)
 								{
-									lane--;
+									lane = 0;
 									lane0_clear = 0;
 									lane_change_time = 0;
-								} 
-								else 
+								}
+								else
 								{
-									if (lane_clear (lane + 1)) 
+									if (lane_clear (lane + 1))
 									{
 										lane2_clear++;
 									}
-
-									else 
+									else
 									{
-										lane0_clear = 0;
-										lane1_clear = 0;
-										lane2_clear = 0;
+										lane0_clear = 0; lane1_clear = 0; lane2_clear = 0;
 									}
 
 									if (lane2_clear>50) {
-										lane++;
+										lane = 2;
 										lane2_clear = 0;
 										lane_change_time = 0;
 									}
 								}
-							} 
-							else 
+							}
+							else // lane == 2
 							{
-								if (lane_clear (lane - 1)) 
+								if (lane_clear (lane - 1))
 								{
 									lane1_clear++;
 								}
-
-								else 
+								else
 								{
-									lane0_clear = 0;
-									lane1_clear = 0;
-									lane2_clear = 0;
+									lane0_clear = 0; lane1_clear = 0; lane2_clear = 0;
 								}
 
 								if (lane1_clear>50) {
-									lane--;
+									lane = 1;
 									lane1_clear = 0;
 									lane_change_time = 0;
 								}
